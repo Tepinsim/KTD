@@ -58,6 +58,7 @@ def recognize_text(text_regions):
 
 # Function to process an image
 def process_image(image, conf_threshold=0.5):
+    image = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB) if image.shape[-1] == 4 else image  # Convert to RGB if RGBA
     text_regions, boxes = detect_text(image, conf_threshold)
     
     if not text_regions:
@@ -86,7 +87,8 @@ uploaded_file = st.file_uploader("Upload an Image", type=["png", "jpg", "jpeg"])
 
 if uploaded_file:
     image = Image.open(uploaded_file)
-    image = np.array(image, dtype=np.uint8)  # Convert PIL image to numpy
+    image = image.convert("RGB")  # Ensure image has 3 channels
+    image = np.array(image, dtype=np.uint8)  # Convert to numpy array
 
     # Run OCR pipeline
     processed_image, extracted_text = process_image(image, conf_threshold)
