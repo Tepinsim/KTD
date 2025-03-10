@@ -6,9 +6,10 @@ from PIL import Image
 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 from ultralytics import YOLO
 import os
+import torch
 
-# Set paths for models
-YOLO_MODEL_PATH = "/Users/Cs-Store/Desktop/intern2/text detection/best_yolov5.pt"
+# Load YOLOv5 model using torch.hub
+YOLO_MODEL_PATH = torch.hub.load("ultralytics/yolov5", "custom", path="/Users/Cs-Store/Desktop/intern2/text detection/best_yolov5.pt", source="local")
 TROCR_MODEL_PATH = "/Users/Cs-Store/Desktop/intern2/text detection/fine_tuned_trocr_khmer"
 
 # Load YOLOv5 text detection model
