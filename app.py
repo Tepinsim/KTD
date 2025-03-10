@@ -4,49 +4,67 @@ import cv2
 import numpy as np
 from PIL import Image
 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
-from ultralytics import YOLO
 import os
-import torch
 
-# Load YOLOv5 model using torch.hub
-YOLO_MODEL_PATH = torch.hub.load("ultralytics/yolov5", "custom", path="/Users/Cs-Store/Desktop/intern2/text detection/best_yolov5.pt", source="local")
-TROCR_MODEL_PATH = "/Users/Cs-Store/Desktop/intern2/text detection/fine_tuned_trocr_khmer"
+# ------------------------------
+# 🔹 Model File Paths
+# ------------------------------
+YOLO_MODEL_PATH = r"C:\Users\Cs-Store\Desktop\intern2\text detection\best_yolov5.pt"
+TROCR_MODEL_PATH = r"C:\Users\Cs-Store\Desktop\intern2\text detection\fine_tuned_trocr_khmer"
 
-# Load YOLOv5 text detection model
-if os.path.exists(YOLO_MODEL_PATH):
-    yolo_model = YOLO(YOLO_MODEL_PATH)
-else:
-    st.error(f"YOLO model not found at: {YOLO_MODEL_PATH}")
+# ------------------------------
+# 🔹 Load YOLOv5 Model (Text Detection)
+# ------------------------------
+try:
+    if not os.path.exists(YOLO_MODEL_PATH):
+        raise FileNotFoundError(f"YOLOv5 model not found: {YOLO_MODEL_PATH}")
+    
+    yolo_model = torch.hub.load("ultralytics/yolov5", "custom", path=YOLO_MODEL_PATH, source="local")
 
-# Load TrOCR Khmer OCR model
-if os.path.exists(TROCR_MODEL_PATH):
+except Exception as e:
+    st.error(f"Error loading YOLOv5 model: {e}")
+    st.stop()
+
+# ------------------------------
+# 🔹 Load TrOCR Model (OCR)
+# ------------------------------
+try:
+    if not os.path.exists(TROCR_MODEL_PATH):
+        raise FileNotFoundError(f"TrOCR model not found: {TROCR_MODEL_PATH}")
+
     processor = TrOCRProcessor.from_pretrained(TROCR_MODEL_PATH)
     ocr_model = VisionEncoderDecoderModel.from_pretrained(TROCR_MODEL_PATH)
-else:
-    st.error(f"TrOCR model not found at: {TROCR_MODEL_PATH}")
 
-# Function to detect text regions using YOLOv5
+except Exception as e:
+    st.error(f"Error loading TrOCR model: {e}")
+    st.stop()
+
+# ------------------------------
+# 🔹 Text Detection Function (YOLOv5)
+# ------------------------------
 def detect_text(image, conf_threshold=0.5):
-    results = yolo_model(image)
+    results = yolo_model(image)  # Get predictions
     text_regions = []
     boxes = []
 
-    for result in results:
-        for box in result.boxes.data:
-            x1, y1, x2, y2, conf, cls = box.tolist()
-            if conf >= conf_threshold:  # Apply confidence threshold
-                cropped = image[int(y1):int(y2), int(x1):int(x2)]
-                text_regions.append(cropped)
-                boxes.append((int(x1), int(y1), int(x2), int(y2)))
+    for index, row in results.pandas().xyxy[0].iterrows():
+        x1, y1, x2, y2, conf = int(row["xmin"]), int(row["ymin"]), int(row["xmax"]), int(row["ymax"]), row["confidence"]
+
+        if conf >= conf_threshold:
+            cropped = image[y1:y2, x1:x2]  # Crop detected text region
+            text_regions.append(cropped)
+            boxes.append((x1, y1, x2, y2))
 
     return text_regions, boxes
 
-# Function to recognize text using TrOCR
+# ------------------------------
+# 🔹 OCR Function (TrOCR)
+# ------------------------------
 def recognize_text(text_regions):
     recognized_texts = []
 
     for region in text_regions:
-        image_pil = Image.fromarray(cv2.cvtColor(region, cv2.COLOR_BGR2RGB))
+        image_pil = Image.fromarray(cv2.cvtColor(region, cv2.COLOR_BGR2RGB))  # Convert OpenCV image to PIL
         pixel_values = processor(images=image_pil, return_tensors="pt").pixel_values
 
         with torch.no_grad():
@@ -57,16 +75,18 @@ def recognize_text(text_regions):
 
     return recognized_texts
 
-# Function to process an image
+# ------------------------------
+# 🔹 Process Image (Detection + OCR)
+# ------------------------------
 def process_image(image, conf_threshold=0.5):
     text_regions, boxes = detect_text(image, conf_threshold)
-    
+
     if not text_regions:
         return image, ["No text detected"]
 
     recognized_texts = recognize_text(text_regions)
 
-    # Draw bounding boxes on image
+    # Draw bounding boxes & OCR results
     for (box, text) in zip(boxes, recognized_texts):
         x1, y1, x2, y2 = box
         cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
@@ -74,7 +94,9 @@ def process_image(image, conf_threshold=0.5):
 
     return image, recognized_texts
 
-# Streamlit UI
+# ------------------------------
+# 🔹 Streamlit UI
+# ------------------------------
 st.set_page_config(page_title="Khmer OCR POC", layout="wide")
 st.title("📸 Khmer OCR (POC) - Short Words")
 
