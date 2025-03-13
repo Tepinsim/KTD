@@ -5,7 +5,7 @@ from PIL import Image
 import os
 
 # Model file path
-MODEL_V5_PATH = r"C:\Users\Cs-Store\Desktop\intern2\text detection\best_yolov5.pt"  # Raw string to handle backslashes
+MODEL_V5_PATH = "/Users/Cs-Store/Desktop/intern2/text detection/best.pt"  # Raw string to handle backslashes
 
 # Load model with error handling
 try:
@@ -28,7 +28,7 @@ if uploaded_file is not None:
     image = Image.open(uploaded_file)
     st.image(image, caption="Uploaded Image", use_column_width=True)
 
-    if st.button("Detect Khmer Text (YOLOv5)"):
+    if st.button("Detect Khmer Text (YOLOv8)"):
         img_np = np.array(image)
         results_v5 = model_v5(img_np)
         annotated_img_v5 = results_v5.render()[0]
