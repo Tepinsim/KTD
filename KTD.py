@@ -3,9 +3,10 @@ from ultralytics import YOLO
 from PIL import Image
 import numpy as np
 import os
+import pandas as pd
 
 # Model file path
-MODEL_V8_PATH = "/Users/Cs-Store/Desktop/intern2/text detection/best.pt"  # Raw string to handle backslashes
+MODEL_V8_PATH = "/Users/Cs-Store/Desktop/intern2/text detection/best.pt"
 
 # Load model with error handling
 try:
@@ -31,6 +32,23 @@ if uploaded_file is not None:
     if st.button("Detect Khmer Text (YOLOv8)"):
         img_np = np.array(image)
         results_v8 = model_v8(img_np)
-        annotated_img_v8 = results_v8[0].plot() # get plotted image
+        annotated_img_v8 = results_v8[0].plot()
         st.image(annotated_img_v8, caption="YOLOv8 Detection Results", use_column_width=True)
-        st.write(results_v8[0].pandas().xyxy[0]) #display results as a pandas dataframe
+
+        # Convert bounding box data to Pandas DataFrame
+        boxes = results_v8[0].boxes.xyxy.cpu().numpy()
+        confidences = results_v8[0].boxes.conf.cpu().numpy()
+        class_ids = results_v8[0].boxes.cls.cpu().numpy()
+
+        if len(boxes) > 0:
+            df = pd.DataFrame({
+                'x1': boxes[:, 0],
+                'y1': boxes[:, 1],
+                'x2': boxes[:, 2],
+                'y2': boxes[:, 3],
+                'confidence': confidences,
+                'class': class_ids
+            })
+            st.write(df)
+        else:
+            st.write("No detections found.")
