@@ -36,10 +36,14 @@ def main():
                     im = cv2.cvtColor(im_array, cv2.COLOR_BGR2RGB)
 
                     boxes = r.boxes.xyxy.cpu().numpy().astype(int)
-                    results_text = [] #list to store results
-                    for i, box in enumerate(boxes):  # Enumerate boxes for numbering
+
+                    # Sort boxes by y1 (top) and then x1 (left)
+                    sorted_boxes = sorted(boxes, key=lambda b: (b[1], b[0]))
+
+                    results_text = []
+                    for i, box in enumerate(sorted_boxes):
                         x1, y1, x2, y2 = box
-                        cv2.putText(im, str(i + 1), (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)  # Add box number
+                        cv2.putText(im, str(i + 1), (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                         cropped_image = image_cv[y1:y2, x1:x2]
                         cropped_pil = Image.fromarray(cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB))
 
@@ -48,11 +52,11 @@ def main():
                         generated_ids = ocr_model.generate(pixel_values)
                         generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
-                        results_text.append(f"Box {i + 1}: Recognized Text: {generated_text}") #append results to list
+                        results_text.append(f"Box {i + 1}: Recognized Text: {generated_text}")
 
                     st.image(im, caption="Detected Khmer Text Boxes", use_column_width=True)
 
-                    for result in results_text: #display results
+                    for result in results_text:
                         st.write(result)
 
                 st.success("Khmer text detection and recognition complete!")
