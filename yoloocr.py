@@ -19,7 +19,6 @@ def main():
             with st.spinner("Detecting and recognizing Khmer text..."):
                 # Convert PIL Image to OpenCV format
                 image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-                pil_image = image.convert("RGB") #keep pil image for drawing text later.
 
                 # Load the YOLOv8 model
                 model = YOLO("/Users/Cs-Store/Desktop/intern2/yolov8/173.pt")
@@ -33,11 +32,9 @@ def main():
 
                 # Process and display the results
                 for r in results:
-                    im_array = r.plot(labels=False)
-                    im = cv2.cvtColor(im_array, cv2.COLOR_BGR2RGB)
-                    pil_im = Image.fromarray(im)
-                    draw = ImageDraw.Draw(pil_im)
-                    font_path = "/Users/Cs-Store/Desktop/intern2/yolov8/Siemreap-Regular.ttf"
+                    pil_image = image.copy() #make copy so we can draw on it later.
+                    draw = ImageDraw.Draw(pil_image)
+                    font_path = r"C:\Users\Cs-Store\Desktop\intern2\yolov8\Siemreap-Regular.ttf"
                     try:
                         font = ImageFont.truetype(font_path, 20)  # Adjust font size as needed
                     except OSError:
@@ -60,7 +57,7 @@ def main():
                         combined_text += generated_text + " "
                         draw.text((x1, y2 + 5), generated_text, font=font, fill=(0, 255, 0)) #draw text under box.
 
-                    st.image(pil_im, caption="Detected Khmer Text Boxes with Recognized Text", use_column_width=True)
+                    st.image(pil_image, caption="Detected Khmer Text Boxes with Recognized Text", use_column_width=True)
                     st.write(f"Combined Recognized Text: {combined_text}")
 
                 st.success("Khmer text detection and recognition complete!")
