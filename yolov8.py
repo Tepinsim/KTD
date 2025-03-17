@@ -26,7 +26,7 @@ def main():
 
                 # Process and display the results
                 for r in results:
-                    im_array = r.plot()
+                    im_array = r.plot(labels=False)
                     im = cv2.cvtColor(im_array, cv2.COLOR_BGR2RGB)
                     st.image(im, caption="Detected Khmer Text", use_column_width=True)
                 st.success("Khmer text detection complete!")
