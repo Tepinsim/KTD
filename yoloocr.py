@@ -37,8 +37,8 @@ def main():
 
                     boxes = r.boxes.xyxy.cpu().numpy().astype(int)
 
-                    # Sort boxes by x1 (left)
-                    sorted_boxes = sorted(boxes, key=lambda b: b[0])
+                    # Sort boxes by y1 (top) and then x1 (left)
+                    sorted_boxes = sorted(boxes, key=lambda b: (b[1], b[0]))
 
                     results_text = []
                     for i, box in enumerate(sorted_boxes):
