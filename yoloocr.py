@@ -5,6 +5,12 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 import torch
+import khmernltk  # Import KhmerNLTK
+
+def normalize_text(text):
+    """Normalizes the text using KhmerNLTK."""
+    normalized_text = khmernltk.word_tokenize(text)
+    return " ".join(normalized_text)
 
 def main():
     st.title("Khmer Text Detection and OCR with YOLOv8 and TrOCR")
@@ -60,25 +66,28 @@ def main():
                         generated_ids = ocr_model.generate(pixel_values)
                         generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
-                        combined_text += generated_text + " "
+                        normalized_generated_text = normalize_text(generated_text)  # Normalize the text
+
+                        combined_text += normalized_generated_text + " "  # Normalize before combining.
+
                         if label_display_mode == "Draw Boxes":
-                            draw.rectangle((x1, y1, x2, y2), outline=(0, 0, 255), width=2)  # Draw boxes
-                            draw.text((x1, y2 + 5), generated_text, font=font, fill=(0, 255, 0))
+                            draw.rectangle((x1, y1, x2, y2), outline=(0, 0, 255), width=2)
+                            draw.text((x1, y2 + 5), normalized_generated_text, font=font, fill=(0, 255, 0))  # Normalize before drawing.
                         elif label_display_mode == "Draw Confidence":
                             confidence = r.boxes.conf[list(boxes).index(box)].item()
-                            draw.text((x1, y1 - 20), f"Conf: {confidence:.2f}", font=font, fill=(255, 0, 0)) #draw confidence
-                            draw.text((x1, y2 + 5), generated_text, font=font, fill=(0, 255, 0))
+                            draw.text((x1, y1 - 20), f"Conf: {confidence:.2f}", font=font, fill=(255, 0, 0))
+                            draw.text((x1, y2 + 5), normalized_generated_text, font=font, fill=(0, 255, 0))
                         elif label_display_mode == "Draw Labels":
                             class_id = int(r.boxes.cls[list(boxes).index(box)].item())
                             class_name = r.names[class_id]
-                            draw.text((x1, y1 - 20), class_name, font=font, fill=(255, 0, 0)) #draw label
-                            draw.text((x1, y2 + 5), generated_text, font=font, fill=(0, 255, 0))
+                            draw.text((x1, y1 - 20), class_name, font=font, fill=(255, 0, 0))
+                            draw.text((x1, y2 + 5), normalized_generated_text, font=font, fill=(0, 255, 0))
                         elif label_display_mode == "Censor Predictions":
-                            draw.rectangle((x1, y1, x2, y2), fill=(0, 0, 0)) #censor predictions
+                            draw.rectangle((x1, y1, x2, y2), fill=(0, 0, 0))
                             draw.text((x1, y2 + 5), "Censored", font=font, fill=(255, 255, 255))
 
                     st.image(pil_image, caption="Detected Khmer Text Boxes with Recognized Text", use_column_width=True)
-                    st.write(f"Combined Recognized Text: {combined_text}")
+                    st.write(f"Combined Normalized Recognized Text: {combined_text}")  # Normalize the combined text.
 
                 st.success("Khmer text detection and recognition complete!")
 
