@@ -33,14 +33,14 @@ def main():
                 image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
                 # Load the YOLOv8 model
-                model = YOLO("/Users/Cs-Store/Desktop/intern2/yolov8/173.pt")
+                model = YOLO("/Users/Cs-Store/Desktop/intern2/yolov8/2603yolov8m.pt")
 
                 # Perform inference with thresholds
                 results = model(image_cv, conf=confidence_threshold, iou=iou_threshold)
 
                 # Load TrOCR model and processor
-                processor = TrOCRProcessor.from_pretrained("/Users/Cs-Store/Desktop/intern2/yolov8/fine_tuned_trocr_khmer")
-                ocr_model = VisionEncoderDecoderModel.from_pretrained("/Users/Cs-Store/Desktop/intern2/yolov8/fine_tuned_trocr_khmer")
+                processor = TrOCRProcessor.from_pretrained("/Users/Cs-Store/Desktop/intern2/yolov8/20_my_fine_tuned_trocr_khmer_model")
+                ocr_model = VisionEncoderDecoderModel.from_pretrained("/Users/Cs-Store/Desktop/intern2/yolov8/20_my_fine_tuned_trocr_khmer_model")
 
                 # Process and display the results
                 for r in results:
@@ -74,18 +74,34 @@ def main():
                             draw.rectangle((x1, y1, x2, y2), outline=(0, 0, 255), width=2)
                             draw.text((x1, y2 + 5), normalized_generated_text, font=font, fill=(0, 255, 0))  # Normalize before drawing.
                         elif label_display_mode == "Draw Confidence":
-                            confidence = r.boxes.conf[list(boxes).index(box)].item()
-                            draw.text((x1, y1 - 20), f"Conf: {confidence:.2f}", font=font, fill=(255, 0, 0))
+                            try:
+                                confidence = r.boxes.conf[list(boxes).index(box)].item()
+                                draw.text((x1, y1 - 20), f"Conf: {confidence:.2f}", font=font, fill=(255, 0, 0))
+                            except ValueError:
+                                st.write(f"Confidence not found for box: {box}")
                             draw.text((x1, y2 + 5), normalized_generated_text, font=font, fill=(0, 255, 0))
                         elif label_display_mode == "Draw Labels":
-                            class_id = int(r.boxes.cls[list(boxes).index(box)].item())
-                            class_name = r.names[class_id]
-                            draw.text((x1, y1 - 20), class_name, font=font, fill=(255, 0, 0))
+                            try:
+                                box_index = -1
+                                for i, b in enumerate(r.boxes.xyxy.cpu().numpy().astype(int)):
+                                    if np.array_equal(b, box):
+                                        box_index = i
+                                        break
+
+                                if box_index != -1:
+                                    class_id = int(r.boxes.cls[box_index].item())
+                                    class_name = r.names[class_id]
+                                    draw.text((x1, y1 - 20), class_name, font=font, fill=(255, 0, 0))
+                                else:
+                                    st.write(f"Box {box} not found in r.boxes.xyxy")
+
+                            except ValueError as e:
+                                st.write(f"Error getting class ID: {e}")
                             draw.text((x1, y2 + 5), normalized_generated_text, font=font, fill=(0, 255, 0))
                         elif label_display_mode == "Censor Predictions":
                             draw.rectangle((x1, y1, x2, y2), fill=(0, 0, 0))
                             draw.text((x1, y2 + 5), "Censored", font=font, fill=(255, 255, 255))
-
+                    print(combined_text)
                     st.image(pil_image, caption="Detected Khmer Text Boxes with Recognized Text", use_column_width=True)
                     st.write(f"Combined Normalized Recognized Text: {combined_text}")  # Normalize the combined text.
 
