@@ -8,8 +8,8 @@ from ultralytics import YOLO
 import os
 
 # Define model paths
-YOLO_MODEL_PATH = r"C:\Users\Cs-Store\Desktop\intern2\text detection\new.pt"
-TROCR_MODEL_PATH = r"C:\Users\Cs-Store\Desktop\intern2\text detection\fine_tuned_trocr_khmer"
+YOLO_MODEL_PATH = r"C:\Users\Cs-Store\Desktop\intern2\text detection\2603yolov8m.pt"
+TROCR_MODEL_PATH = r"C:\Users\Cs-Store\Desktop\intern2\text detection\20_my_fine_tuned_trocr_khmer_model"
 
 # Load YOLOv8 model for text detection
 if os.path.exists(YOLO_MODEL_PATH):
