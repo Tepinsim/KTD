@@ -6,7 +6,7 @@ import os
 import pandas as pd #import pandas.
 
 # Model file path
-MODEL_V8_PATH = "/Users/Cs-Store/Desktop/intern2/text detection/2603yolo8m.pt"
+MODEL_V8_PATH = "/Users/Cs-Store/Desktop/intern2/text detection/2603yolov8m.pt"
 
 # Load model with error handling
 try:
